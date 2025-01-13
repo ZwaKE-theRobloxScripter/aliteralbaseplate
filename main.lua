@@ -44,14 +44,64 @@ Rayfield:Notify({
    Image = nil,
 })
 
-local Slider = MainTab:CreateSlider({
+local Input = MainTab:CreateInput({
    Name = "Walkspeed",
-   Range = {0, 300},
-   Increment = 1,
-   Suffix = "Speed",
-   CurrentValue = 16,
-   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-          game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = (Value)
+   CurrentValue = "",
+   PlaceholderText = "16",
+   RemoveTextAfterFocusLost = false,
+   Flag = "walkspeed",
+   Callback = function(Text)
+           game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = (Text)
    end,
 })
+
+local Input = MainTab:CreateInput({
+   Name = "JumpPower",
+   CurrentValue = "",
+   PlaceholderText = "50",
+   RemoveTextAfterFocusLost = false,
+   Flag = "jumppower",
+   Callback = function(Text)
+           game.Players.LocalPlayer.Character.Humanoid.JumpPower = (Text)
+   end,
+})
+
+-- Variable to track toggle state
+local infiniteJumpEnabled = false
+local canJump = true -- Cooldown variable
+
+-- Create a toggle (use your existing toggle instead of creating a new one)
+local toggle = MainTab:CreateToggle({
+    Name = "Inf jump",
+    CurrentValue = false, -- Default state
+    Flag = "infjump", -- Unique identifier
+    Callback = function(Value)
+        infiniteJumpEnabled = Value
+        print("Infinite Jump Toggle State:", infiniteJumpEnabled) -- Debugging output
+    end
+})
+
+-- Detect user input
+local UserInputService = game:GetService("UserInputService")
+
+-- Player object
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- Set up infinite jumping
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and canJump then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            canJump = false -- Set cooldown
+            task.wait(0.1) -- Cooldown duration (adjust as needed)
+            canJump = true -- Reset cooldown
+        end
+    end
+end)
+
+-- Handle character respawn
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+end)
